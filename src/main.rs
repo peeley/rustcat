@@ -29,10 +29,9 @@ fn write_loop() -> std::io::Result<()> {
         stream.write(query.as_bytes()).expect("Connection closed.");
         loop{
             let n_bytes = stream.read(&mut buffer).unwrap();
-            println!("Read {} bytes: ", n_bytes);
             response.extend_from_slice(&buffer);
             buffer = [0; 512];
-            if n_bytes == 0 {
+            if n_bytes == 0 || n_bytes < buffer_length {
                 break;
             }
         }
