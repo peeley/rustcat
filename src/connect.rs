@@ -10,20 +10,26 @@ fn connect(host: &String, port: &String) -> TcpStream {
 }
 
 pub fn write_loop(host: &String, port: &String) -> std::io::Result<()> {
-    let mut stream = connect(&host, &port);
-    let mut response = Vec::new();
-    let mut query: String = String::new();
+    let stream = connect(&host, &port);
+    let mut response = String::new();
+    let mut query = String::new();
+    let mut reader = std::io::BufReader::new(&stream);
+    let mut writer = std::io::BufWriter::new(&stream);
     loop {
         read_query(&mut query);
         query.push('\n');
-        stream.write(query.as_bytes()).expect("Connection closed.");
-        stream.read_to_end(&mut response).unwrap();
+        writer.write(query.as_bytes()).expect("Connection closed.");
+        writer.flush()?;
+        let mut n_bytes = reader.read_line(&mut response).unwrap();
+        while n_bytes != 0 {
+            println!("{}, {} new bytes", response, n_bytes);
+            n_bytes = reader.read_line(&mut response).unwrap();
+        }
         if response.len() == 0 {
             println!("Empty response, connection has been closed.");
             break Ok(());
         }
-        println!("{}\n", String::from_utf8_lossy(&response));
-        stream.flush()?;
+        println!("{}\n", /*String::from_utf8_lossy*/(&mut response));
         response.clear();
         query.clear();
     }
