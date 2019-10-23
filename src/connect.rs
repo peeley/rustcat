@@ -11,26 +11,28 @@ fn connect(host: &String, port: &String) -> TcpStream {
 
 pub fn write_loop(host: &String, port: &String) -> std::io::Result<()> {
     let stream = connect(&host, &port);
-    let mut response = String::new();
+    stream.set_nodelay(true).expect("set_nonblocking call failed");
+    let mut buffer = [0 as u8; 1024];
+    let mut response = Vec::new();
     let mut query = String::new();
     let mut reader = std::io::BufReader::new(&stream);
     let mut writer = std::io::BufWriter::new(&stream);
     loop {
+        loop {
+            let n_bytes = reader.read(&mut buffer).unwrap();
+            println!("{}, {} new bytes", String::from_utf8_lossy(&response), 
+                n_bytes);
+            response.extend_from_slice(&buffer);
+            if n_bytes < 1024 {
+                break;
+            }
+        }
+        println!("{}\n", String::from_utf8_lossy(&mut response));
+        response.clear();
         read_query(&mut query);
         query.push('\n');
         writer.write(query.as_bytes()).expect("Connection closed.");
         writer.flush()?;
-        let mut n_bytes = reader.read_line(&mut response).unwrap();
-        while n_bytes != 0 {
-            println!("{}, {} new bytes", response, n_bytes);
-            n_bytes = reader.read_line(&mut response).unwrap();
-        }
-        if response.len() == 0 {
-            println!("Empty response, connection has been closed.");
-            break Ok(());
-        }
-        println!("{}\n", /*String::from_utf8_lossy*/(&mut response));
-        response.clear();
         query.clear();
     }
 }
