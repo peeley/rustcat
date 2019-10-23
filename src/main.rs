@@ -9,7 +9,6 @@ mod listen;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    println!("{:?}", args);
     if args.len() != 4 {
         panic!("Use command with: rustcat <ipaddr> <port>");
     }

@@ -1,30 +1,42 @@
 use std::net::TcpStream;
 use std::io::*;
+use std::time::Duration;
+use std::process::exit;
 
 fn connect(host: &String, port: &String) -> TcpStream {
     let conn_string = format!("{}:{}", host, port);
     let stream = TcpStream::connect(conn_string.trim())
         .expect("Could not connect to address.");
     println!("Connected to {}", conn_string);
+    stream.set_read_timeout(Some(Duration::from_millis(100))).unwrap();
     return stream;
 }
 
 pub fn write_loop(host: &String, port: &String) -> std::io::Result<()> {
     let stream = connect(&host, &port);
-    stream.set_nodelay(true).expect("set_nonblocking call failed");
-    let mut buffer = [0 as u8; 1024];
+    let mut buffer;
     let mut response = Vec::new();
     let mut query = String::new();
     let mut reader = std::io::BufReader::new(&stream);
     let mut writer = std::io::BufWriter::new(&stream);
     loop {
         loop {
-            let n_bytes = reader.read(&mut buffer).unwrap();
-            println!("{}, {} new bytes", String::from_utf8_lossy(&response), 
-                n_bytes);
-            response.extend_from_slice(&buffer);
-            if n_bytes < 1024 {
-                break;
+            buffer = [0; 1024];
+            match reader.read(&mut buffer) {
+                Ok(n_bytes) => { 
+                    response.extend_from_slice(&buffer);
+                    if n_bytes == 0 {
+                        break;
+                    }
+                }
+                Err(e) => match e.kind() {
+                    ErrorKind::WouldBlock => break,
+                    ErrorKind::BrokenPipe => {
+                        println!("Connection closed.");
+                        exit(1);
+                    }
+                    _ => panic!(e),
+                }
             }
         }
         println!("{}\n", String::from_utf8_lossy(&mut response));
