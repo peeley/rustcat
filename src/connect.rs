@@ -43,8 +43,10 @@ pub fn write_loop(host: &String, port: &String) -> std::io::Result<()> {
         response.clear();
         read_query(&mut query);
         query.push('\n');
-        writer.write(query.as_bytes()).expect("Connection closed.");
-        writer.flush()?;
+        let n_bytes = writer.write(query.as_bytes())
+            .expect("Connection closed.");
+        println!("{} bytes written, connection closed.", n_bytes);
+        writer.flush().expect("Unable to flush stream.");
         query.clear();
     }
 }
