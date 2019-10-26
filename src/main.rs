@@ -21,10 +21,13 @@ fn main() {
             "Port to listen on.")
         (@arg connectport: +takes_value conflicts_with[listen]
             "Port to connect to.")
+        (@arg command: -e --execute +takes_value requires[listen]
+            "Pipe incoming queries to specified program.")
     ).get_matches();
     if matches.is_present("listen"){
-        let port = String::from(matches.value_of("listenport").unwrap());
-        listen::listen_loop(&port).unwrap();
+        let port = matches.value_of("listenport").unwrap();
+        let command = matches.value_of("command");
+        listen::listen_loop(port, command).unwrap();
     }
     else{
         let host = String::from(matches.value_of("host").unwrap());
