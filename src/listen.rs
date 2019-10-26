@@ -1,7 +1,7 @@
 use std::net::{TcpListener, TcpStream};
 use std::io::*;
 
-pub fn listen(port: &String) -> std::io::Result<()> {
+pub fn listen_loop(port: &String) -> std::io::Result<()> {
     let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
     println!("Listening on port {}", port);
     loop {

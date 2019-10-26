@@ -1,7 +1,8 @@
 /*
- *  RustCat - A port of NetCat to rust.
+ *  RustCat - A port of NetCat to Rust.
  *  Written by Noah Snelson, in the year of Our Lord 2019.
  */
+
 #[macro_use]
 extern crate clap;
 mod connect;
@@ -23,7 +24,7 @@ fn main() {
     ).get_matches();
     if matches.is_present("listen"){
         let port = String::from(matches.value_of("listenport").unwrap());
-        listen::listen(&port).unwrap();
+        listen::listen_loop(&port).unwrap();
     }
     else{
         let host = String::from(matches.value_of("host").unwrap());
