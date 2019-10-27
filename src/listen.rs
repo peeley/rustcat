@@ -2,6 +2,8 @@ use std::net::{TcpListener, TcpStream};
 use std::io::{Result, Read, Write};
 use std::process::{Command, Stdio, Child};
 
+use rustcat::lib;
+
 pub fn listen_loop(port: &str, command_name: Option<&str>) -> Result<()> {
     let mut command: Option<Child> = match command_name {
         Some(name) => Some(Command::new(name)
@@ -22,7 +24,7 @@ pub fn listen_loop(port: &str, command_name: Option<&str>) -> Result<()> {
 
 fn handle_incoming(stream: &mut TcpStream, command: &mut Option<Child>) {
     let mut incoming;
-    let mut output: Vec<u8> = Vec::new();
+    let mut output: Vec<u8>;
     loop {
         incoming = [0 as u8; 1024];
         stream.read(&mut incoming)
@@ -30,9 +32,10 @@ fn handle_incoming(stream: &mut TcpStream, command: &mut Option<Child>) {
         println!("{}", String::from_utf8_lossy(&incoming));
         match command {
             Some(c) => {
+                println!("Writing to command...");
                 c.stdin.as_mut().unwrap().write_all(&incoming).unwrap();
-                // Reading from child process hangs when no end of file
-                c.stdout.as_mut().unwrap().read_to_end(&mut output).unwrap();
+                println!("Reading response...");
+                output = lib::read_til_empty(&mut c.stdout.as_mut().unwrap());
                 println!("{}", String::from_utf8_lossy(&output));
             }
             None => {
