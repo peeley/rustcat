@@ -26,8 +26,11 @@ pub fn write_loop(host: &String, port: &String) -> std::io::Result<()> {
         read_user_query(&mut query);
         query.push('\n');
         let n_bytes = writer.write(query.as_bytes())
-            .expect("Connection closed.");
-        println!("{} bytes written, connection closed.", n_bytes);
+            .expect("Unable to write query, connection closed.");
+        if n_bytes == 0{
+            println!("No bytes written, connection closed.");
+            break Ok(());
+        }
         writer.flush().expect("Unable to flush stream.");
         query.clear();
     }
