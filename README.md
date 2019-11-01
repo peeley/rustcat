@@ -5,6 +5,15 @@ A full rewrite of the GNU NetCat networking tool in Rust.
 The project aims to fully mirror and be interoperable with the original NetCat,
 but this project is very much a work in progress.
 
+## Install
+Install the binary with:
+```
+git clone https://github.com/peeley/rustcat.git
+cd rustcat
+cargo install --path .
+```
+As indicated by cargo, ~/cargo/.bin must be added to PATH to execute programs
+installed by cargo.
 
 ## Features
 - Connect to other hosts over TCP and send raw bytes
