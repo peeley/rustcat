@@ -1,8 +1,6 @@
-use std::net::{TcpListener, TcpStream};
-use std::io::{Result, Read, Write};
+use std::net::{TcpListener};
+use std::io::{Result, Write, BufReader, BufRead, BufWriter};
 use std::process::{Command, Stdio, Child};
-
-use rustcat::lib;
 
 pub fn listen_loop(port: &str, command_name: Option<&str>) -> Result<()> {
     let mut command: Option<Child> = match command_name {
@@ -14,35 +12,48 @@ pub fn listen_loop(port: &str, command_name: Option<&str>) -> Result<()> {
     };
     let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
     println!("Listening on port {}", port);
+    let mut output: String;
+    let mut incoming = String::new();
     loop {
-        for stream in listener.incoming() {
+        for stream_opt in listener.incoming() {
             println!("Incoming connection...");
-            handle_incoming(&mut stream.unwrap(), &mut command);
+            let stream = stream_opt.unwrap();
+            let mut query_reader = BufReader::new(&stream);
+            let mut response_writer = BufWriter::new(&stream);
+            query_reader.read_line(&mut incoming).unwrap();
+            println!("Query: {}", &incoming);
+            match command.as_mut() {
+                Some(mut c) => { 
+                    output = handle_command(&incoming.as_bytes(), &mut c);
+                }
+                None => {
+                    output = incoming.clone();
+                }
+            }
+            response_writer.write(&output.as_bytes()).unwrap();
+            response_writer.flush().unwrap();
+            incoming.clear();
+            output.clear();
         }
     }
 }
 
-fn handle_incoming(stream: &mut TcpStream, command: &mut Option<Child>) {
-    let mut incoming;
-    let mut output: Vec<u8>;
-    loop {
-        incoming = [0 as u8; 1024];
-        stream.read(&mut incoming)
-            .expect("UNABLE TO DECODE INCOMING MESSAGE");
-        println!("{}", String::from_utf8_lossy(&incoming));
-        match command {
-            Some(c) => {
-                println!("Writing to command...");
-                c.stdin.as_mut().unwrap().write_all(&incoming).unwrap();
-                println!("Reading response...");
-                output = lib::read_til_empty(&mut c.stdout.as_mut().unwrap());
-                println!("{}", String::from_utf8_lossy(&output));
-            }
-            None => {
-                output = incoming.to_vec();
-            }
+fn handle_command(incoming: &[u8], command: &mut Child) -> String {
+    let mut output = String::new();
+    let reader = BufReader::new(command.stdout.as_mut().unwrap());
+    println!("Writing to command...");
+    command.stdin.as_mut().unwrap().write_all(&incoming).unwrap();
+    command.stdin.as_mut().unwrap().flush().unwrap();
+    println!("Reading response...");
+    for line_opt in reader.lines(){
+        let line = line_opt.unwrap();
+        output.push_str(&line);
+        output.push('\n');
+        if line.len() <= 1 {
+            break;
         }
-        stream.write(&output).unwrap();
-        stream.flush().unwrap();
+        println!("{}", &output);
     }
+    println!("{}", &output);
+    return output;
 }
