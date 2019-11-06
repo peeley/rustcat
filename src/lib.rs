@@ -31,4 +31,22 @@ pub mod lib{
         }
         return total;
     }
+
+    pub fn hexdump(received: bool, n_bytes: i32, chars: &[u8]) -> String{
+        let num_lines = (chars.len() / 16) as usize;
+        let mut hexdump = String::new();
+        let mode = if received { "Received" } else { "Sent" };
+        hexdump.push_str(&format!("{} {} bytes to the socket", mode, n_bytes));
+        let mut char_idx: usize;
+        for line_num in 0..num_lines {
+            hexdump.push_str(&format!("{:#8} ", line_num));
+            for char_offset in 0..16 {
+                char_idx = line_num * 16 + char_offset;
+                hexdump.push_str(&format!("{:x} ", chars[char_idx]));
+                if char_offset % 4 == 0 { hexdump.push(' '); }
+            }
+            hexdump.push('\n');
+        }
+        return hexdump;
+    }
 }
