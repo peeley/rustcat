@@ -22,6 +22,7 @@ pub fn write_loop(host: &String, port: &String) -> std::io::Result<()> {
     loop {
         response = lib::read_til_empty(&mut reader);
         println!("{}\n", String::from_utf8_lossy(&mut response));
+        lib::hexdump(true, response.len(), &response.as_slice(), "hexdump.txt");
         response.clear();
         read_user_query(&mut query);
         query.push('\n');

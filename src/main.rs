@@ -5,6 +5,7 @@
 
 #[macro_use]
 extern crate clap;
+use std::fs::{File, remove_file};
 mod connect;
 mod listen;
 
@@ -23,7 +24,16 @@ fn main() {
             "Port to connect to.")
         (@arg command: -e --execute +takes_value requires[listen]
             "Pipe incoming queries to specified program.")
+        (@arg output: -o --output +takes_value
+            "Hexdump incoming and outgoing traffic to file.")
     ).get_matches();
+    if true /*matches.is_present("output")*/ {
+        let filename = "hexdump.txt"; //matches.value_of("output").unwrap();
+        match File::open(filename) {
+            Ok(_) => { println!("deleting old file"); remove_file(filename)},
+            Err(_) => Ok(()),
+        }.unwrap();
+    }
     if matches.is_present("listen"){
         let port = matches.value_of("listenport").unwrap();
         let command = matches.value_of("command");

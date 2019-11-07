@@ -1,6 +1,7 @@
 pub mod lib{
-    use std::io::{Read, ErrorKind};
+    use std::io::{Write, Read, ErrorKind};
     use std::process::exit;
+    use std::fs::OpenOptions;
 // The Read trait implements read_to_end and read_to_string functions which
 // read from a buffer until EOF is reached, but for applications like output
 // piped to stdout there is no EOF, so the functions hangs until timeout. This
@@ -32,21 +33,26 @@ pub mod lib{
         return total;
     }
 
-    pub fn hexdump(received: bool, n_bytes: i32, chars: &[u8]) -> String{
+    pub fn hexdump(received: bool, n_bytes: usize, chars: &[u8], filename: &str) {
         let num_lines = (chars.len() / 16) as usize;
         let mut hexdump = String::new();
         let mode = if received { "Received" } else { "Sent" };
-        hexdump.push_str(&format!("{} {} bytes to the socket", mode, n_bytes));
+        hexdump.push_str(&format!("{} {} bytes to the socket\n", mode, n_bytes));
         let mut char_idx: usize;
         for line_num in 0..num_lines {
-            hexdump.push_str(&format!("{:#8} ", line_num));
+            hexdump.push_str(&format!("{:08X}  ", line_num*16));
             for char_offset in 0..16 {
                 char_idx = line_num * 16 + char_offset;
-                hexdump.push_str(&format!("{:x} ", chars[char_idx]));
-                if char_offset % 4 == 0 { hexdump.push(' '); }
+                hexdump.push_str(&format!("{:02X} ", chars[char_idx]));
+                if (char_offset+1) % 4 == 0 { hexdump.push(' '); }
             }
             hexdump.push('\n');
         }
-        return hexdump;
+        let mut file = OpenOptions::new().create(true)
+                                        .append(true)
+                                        .open(filename).unwrap();
+        file.write(hexdump.as_bytes())
+            .expect("Error writing hexdump to file.");
+        file.flush().unwrap();
     }
 }
