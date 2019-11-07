@@ -46,6 +46,16 @@ pub mod lib{
                 hexdump.push_str(&format!("{:02X} ", chars[char_idx]));
                 if (char_offset+1) % 4 == 0 { hexdump.push(' '); }
             }
+            hexdump.push('\t');
+            for char_offset in 0..16 {
+                char_idx = line_num * 16 + char_offset;
+                if chars[char_idx] <= 126 && chars[char_idx] >= 32 {
+                    hexdump.push(chars[char_idx] as char);
+                }
+                else{
+                    hexdump.push('.');
+                }
+            }
             hexdump.push('\n');
         }
         let mut file = OpenOptions::new().create(true)
