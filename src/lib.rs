@@ -65,4 +65,11 @@ pub mod lib{
             .expect("Error writing hexdump to file.");
         file.flush().unwrap();
     }
+
+    pub struct CliArgs {
+        pub port: String,
+        pub host: String,
+        pub command: Option<String>,
+        pub output: Option<String>
+    }
 }

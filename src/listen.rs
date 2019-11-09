@@ -1,15 +1,17 @@
 use std::net::{TcpListener};
 use std::io::{Result, Write, BufReader, BufRead, BufWriter};
 use std::process::{Command, Stdio, Child};
+use rustcat::lib::CliArgs;
 
-pub fn listen_loop(port: &str, command_name: Option<&str>) -> Result<()> {
-    let mut command: Option<Child> = match command_name {
+pub fn listen_loop(args: CliArgs) -> Result<()> {
+    let mut command: Option<Child> = match args.command {
         Some(name) => Some(Command::new(name)
                         .stdin(Stdio::piped())
                         .stdout(Stdio::piped())
                         .spawn().unwrap()),
         None => None
     };
+    let port = args.port;
     let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
     println!("Listening on port {}", port);
     let mut output: String;
@@ -40,19 +42,20 @@ pub fn listen_loop(port: &str, command_name: Option<&str>) -> Result<()> {
 
 fn handle_command(incoming: &[u8], command: &mut Child) -> String {
     let mut output = String::new();
-    let reader = BufReader::new(command.stdout.as_mut().unwrap());
+    let mut reader = BufReader::new(command.stdout.as_mut().unwrap());
     println!("Writing to command...");
     command.stdin.as_mut().unwrap().write_all(&incoming).unwrap();
     command.stdin.as_mut().unwrap().flush().unwrap();
     println!("Reading response...");
-    for line_opt in reader.lines(){
-        let line = line_opt.unwrap();
+    let mut line = String::new();
+    loop {
+        let n_bytes = reader.read_line(&mut line).unwrap();
+        println!("Read {} bytes: {}", n_bytes, line);
         output.push_str(&line);
         output.push('\n');
-        if line.len() <= 1 {
+        if n_bytes == 0 {
             break;
         }
-        println!("{}", &output);
     }
     println!("{}", &output);
     return output;

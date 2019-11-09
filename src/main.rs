@@ -9,6 +9,8 @@ use std::fs::{File, remove_file};
 mod connect;
 mod listen;
 
+use rustcat::lib::CliArgs;
+
 fn main() {
     let matches = clap_app!(rustcat => 
         (version: "0.1.0")
@@ -27,7 +29,7 @@ fn main() {
         (@arg output: -o --output +takes_value
             "Hexdump incoming and outgoing traffic to file.")
     ).get_matches();
-    if true /*matches.is_present("output")*/ {
+    if matches.is_present("output") {
         let filename = "hexdump.txt"; //matches.value_of("output").unwrap();
         match File::open(filename) {
             Ok(_) => { println!("deleting old file"); remove_file(filename)},
@@ -35,13 +37,21 @@ fn main() {
         }.unwrap();
     }
     if matches.is_present("listen"){
-        let port = matches.value_of("listenport").unwrap();
-        let command = matches.value_of("command");
-        listen::listen_loop(port, command).unwrap();
+        let args = CliArgs{
+            port: String::from(matches.value_of("listenport").unwrap()),
+            host: String::new(),
+            command: matches.value_of("command").map(String::from),
+            output: matches.value_of("output").map(String::from),
+        };
+        listen::listen_loop(args).unwrap();
     }
     else{
-        let host = String::from(matches.value_of("host").unwrap());
-        let port = String::from(matches.value_of("connectport").unwrap());
-        connect::write_loop(&host, &port).unwrap();
+        let args = CliArgs{
+            port: String::from(matches.value_of("connectport").unwrap()),
+            host: String::from(matches.value_of("host").unwrap()),
+            command: matches.value_of("command").map(String::from),
+            output: matches.value_of("output").map(String::from),
+        };
+        connect::write_loop(args).unwrap();
     }
 }

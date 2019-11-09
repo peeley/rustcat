@@ -24,6 +24,5 @@ installed by cargo.
 
 ## TODO
 - Connect/listen over UDP in addition to TCP
-- Output traffic to specified file
 - Hexdump incoming/outgoing traffic
 - Port scanning mode

@@ -13,7 +13,9 @@ fn connect(host: &String, port: &String) -> TcpStream {
     return stream;
 }
 
-pub fn write_loop(host: &String, port: &String) -> std::io::Result<()> {
+pub fn write_loop(args: lib::CliArgs) -> std::io::Result<()> {
+    let host = args.host;
+    let port = args.port;
     let stream = connect(&host, &port);
     let mut response: Vec<u8>;
     let mut query = String::new();
