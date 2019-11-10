@@ -32,7 +32,7 @@ fn main() {
     if matches.is_present("output") {
         let filename = matches.value_of("output").unwrap();
         match File::open(filename) {
-            Ok(_) => { println!("deleting old file"); remove_file(filename)},
+            Ok(_) => remove_file(filename),
             Err(_) => Ok(()),
         }.unwrap();
     }

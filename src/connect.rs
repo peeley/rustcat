@@ -6,7 +6,7 @@ use rustcat::lib;
 
 fn connect(host: &String, port: &String) -> TcpStream {
     let conn_string = format!("{}:{}", host, port);
-    let stream = TcpStream::connect(conn_string.trim())
+    let stream = TcpStream::connect(&conn_string)
         .expect("Could not connect to address.");
     println!("Connected to {}", conn_string);
     stream.set_read_timeout(Some(Duration::from_millis(150))).unwrap();
@@ -24,6 +24,7 @@ pub fn write_loop(args: lib::CliArgs) -> std::io::Result<()> {
     let mut writer = std::io::BufWriter::new(&stream);
     loop {
         response = lib::read_til_empty(&mut reader);
+        response.retain(|&x| x != 0x00);
         println!("{}\n", String::from_utf8_lossy(&mut response));
         if outfile.is_some() {
             lib::hexdump(true, response.len(), 
