@@ -19,14 +19,22 @@ pub fn write_loop(args: lib::CliArgs) -> std::io::Result<()> {
     let stream = connect(&host, &port);
     let mut response: Vec<u8>;
     let mut query = String::new();
+    let outfile = args.output;
     let mut reader = std::io::BufReader::new(&stream);
     let mut writer = std::io::BufWriter::new(&stream);
     loop {
         response = lib::read_til_empty(&mut reader);
         println!("{}\n", String::from_utf8_lossy(&mut response));
-        lib::hexdump(true, response.len(), &response.as_slice(), "hexdump.txt");
+        if outfile.is_some() {
+            lib::hexdump(true, response.len(), 
+                            &response.as_slice(), outfile.as_ref().unwrap());
+        }
         response.clear();
         read_user_query(&mut query);
+        if outfile.is_some() {
+            lib::hexdump(false, query.len(), 
+                            &query.as_bytes(), outfile.as_ref().unwrap());
+        }
         query.push('\n');
         let n_bytes = writer.write(query.as_bytes())
             .expect("Unable to write query, connection closed.");

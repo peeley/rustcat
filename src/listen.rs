@@ -1,7 +1,7 @@
 use std::net::{TcpListener};
 use std::io::{Result, Write, BufReader, BufRead, BufWriter};
 use std::process::{Command, Stdio, Child};
-use rustcat::lib::CliArgs;
+use rustcat::lib::{CliArgs, hexdump};
 
 pub fn listen_loop(args: CliArgs) -> Result<()> {
     let mut command: Option<Child> = match args.command {
@@ -16,6 +16,7 @@ pub fn listen_loop(args: CliArgs) -> Result<()> {
     println!("Listening on port {}", port);
     let mut output: String;
     let mut incoming = String::new();
+    let outfile = args.output;
     loop {
         for stream_opt in listener.incoming() {
             println!("Incoming connection...");
@@ -23,6 +24,10 @@ pub fn listen_loop(args: CliArgs) -> Result<()> {
             let mut query_reader = BufReader::new(&stream);
             let mut response_writer = BufWriter::new(&stream);
             query_reader.read_line(&mut incoming).unwrap();
+            if outfile.is_some() {
+                hexdump(true, incoming.len(), incoming.as_bytes(),
+                                outfile.as_ref().unwrap());
+            }
             println!("Query: {}", &incoming);
             match command.as_mut() {
                 Some(mut c) => { 
@@ -31,6 +36,10 @@ pub fn listen_loop(args: CliArgs) -> Result<()> {
                 None => {
                     output = incoming.clone();
                 }
+            }
+            if outfile.is_some() {
+                hexdump(false, output.len(), output.as_bytes(),
+                                outfile.as_ref().unwrap());
             }
             response_writer.write(&output.as_bytes()).unwrap();
             response_writer.flush().unwrap();

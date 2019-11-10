@@ -30,7 +30,7 @@ fn main() {
             "Hexdump incoming and outgoing traffic to file.")
     ).get_matches();
     if matches.is_present("output") {
-        let filename = "hexdump.txt"; //matches.value_of("output").unwrap();
+        let filename = matches.value_of("output").unwrap();
         match File::open(filename) {
             Ok(_) => { println!("deleting old file"); remove_file(filename)},
             Err(_) => Ok(()),
