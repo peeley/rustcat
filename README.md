@@ -20,9 +20,10 @@ installed by cargo.
 - Listen for incoming TCP connections and read bytes
 - Send incoming bytes to executables (-e option in NetCat). This is rightfully
   identified as a huge security vulnerability, but this project is aiming
-  to be a pure rewrite rather than a fork.
+  to be a pure rewrite rather than a fork and as such should include this
+  option.
+- Hexdump incoming/outgoing traffic
 
 ## TODO
 - Connect/listen over UDP in addition to TCP
-- Hexdump incoming/outgoing traffic
 - Port scanning mode
